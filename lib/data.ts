@@ -3,7 +3,7 @@
 export type PlanTier = "starter" | "shield" | "pro";
 export type TriggerType = "rainfall" | "extreme_heat" | "flood" | "cold_fog" | "civil_unrest";
 export type ClaimStatus = "pending" | "approved" | "rejected" | "paid";
-export type Platform = "blinkit" | "zepto";
+export type Platform = "blinkit" | "zepto" | "instamart";
 
 // Plan tier configurations based on SwiftShield policy
 export const PLAN_TIERS = {
@@ -627,6 +627,81 @@ export const workers: Record<string, Worker> = {
 
     upiId: "vikram****@phonepe",
     fraudScore: 25,
+  },
+  // Swiggy Instamart worker
+  "9222333444": {
+    id: "WRK006",
+    name: "Sneha Reddy",
+    phone: "9222333444",
+    platform: "instamart",
+    joinedDate: "2025-02-15",
+    city: "Bangalore",
+
+    currentLocation: { lat: 12.9352, lng: 77.6245 },
+    assignedZone: "zone_blr_1",
+
+    weeklyDeliveries: 105,
+    weeklyEarnings: 4200,
+    avgRating: 4.8,
+    weeklyActiveHours: 35,
+    isOnline: true,
+    lastActiveTime: new Date().toISOString(),
+
+    insurance: {
+      planTier: "shield",
+      status: "active",
+      weeklyPremium: 59,
+      weeklyCap: 1200,
+      validFrom: "2026-02-01",
+      validUntil: "2026-12-31",
+      autoRenewal: true,
+      weeklyClaimTotal: 170,
+      weekStartDate: "2026-03-17",
+    },
+
+    claims: [
+      {
+        id: "CLM030",
+        triggerType: "rainfall",
+        date: "2026-03-16",
+        startTime: "16:00",
+        endTime: "18:00",
+        durationMinutes: 120,
+        amount: 170,
+        status: "paid",
+        description: "Heavy rainfall - 19mm/hr recorded",
+        verification: {
+          gpsValid: true,
+          platformSessionValid: true,
+          coolingPeriodClear: true,
+          mlAnomalyScore: 10,
+          weatherDataMatch: true,
+          overallValid: true,
+        },
+        location: { lat: 12.9352, lng: 77.6245 },
+        zoneId: "zone_blr_1",
+      },
+    ],
+
+    payouts: [
+      {
+        id: "PAY030",
+        date: "2026-03-16",
+        amount: 170,
+        type: "claim",
+        description: "Heavy rainfall compensation",
+        status: "completed",
+        claimId: "CLM030",
+      },
+    ],
+
+    vehicle: {
+      type: "scooter",
+      registrationNumber: "KA 03 JK 7890",
+    },
+
+    upiId: "sneha****@phonepe",
+    fraudScore: 7,
   },
 };
 

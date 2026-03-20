@@ -128,9 +128,8 @@ export default function DashboardPage() {
             </button>
             <div className="flex items-center">
               <div
-                className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
-                  worker.platform === "blinkit" ? "bg-yellow-400 text-zinc-900" : "bg-purple-600"
-                }`}
+                className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${worker.platform === "blinkit" ? "bg-yellow-400 text-zinc-900" : worker.platform === "instamart" ? "bg-orange-500" : "bg-purple-600"
+                  }`}
               >
                 {worker.name.charAt(0)}
               </div>
@@ -147,13 +146,14 @@ export default function DashboardPage() {
           </h1>
           <p className="text-zinc-600 dark:text-zinc-400 flex items-center mt-1">
             <span
-              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mr-2 ${
-                worker.platform === "blinkit"
-                  ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+              className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium mr-2 ${worker.platform === "blinkit"
+                ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400"
+                : worker.platform === "instamart"
+                  ? "bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-400"
                   : "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400"
-              }`}
+                }`}
             >
-              {worker.platform === "blinkit" ? "Blinkit" : "Zepto"} Partner
+              {worker.platform === "blinkit" ? "Blinkit" : worker.platform === "instamart" ? "Swiggy Instamart" : "Zepto"} Partner
             </span>
             <span>{zone?.name}, {zone?.city}</span>
           </p>
@@ -167,11 +167,10 @@ export default function DashboardPage() {
               <h2 className="text-2xl font-bold">{plan.name} Plan</h2>
             </div>
             <span
-              className={`px-3 py-1 rounded-full text-sm font-medium ${
-                worker.insurance.status === "active"
-                  ? "bg-white/20 text-white"
-                  : "bg-red-500 text-white"
-              }`}
+              className={`px-3 py-1 rounded-full text-sm font-medium ${worker.insurance.status === "active"
+                ? "bg-white/20 text-white"
+                : "bg-red-500 text-white"
+                }`}
             >
               {worker.insurance.status.toUpperCase()}
             </span>
