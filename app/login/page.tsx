@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { getWorkerByPhone, DEMO_PHONE } from "@/lib/data";
 
-type Platform = "blinkit" | "zepto" | null;
+type Platform = "blinkit" | "zepto" | "instamart" | null;
 type Step = "platform" | "phone" | "otp";
 
 export default function LoginPage() {
@@ -36,7 +36,7 @@ export default function LoginPage() {
 
     // Check if platform matches
     if (worker.platform !== selectedPlatform) {
-      setError(`This number is registered with ${worker.platform === "blinkit" ? "Blinkit" : "Zepto"}`);
+      setError(`This number is registered with ${worker.platform === "blinkit" ? "Blinkit" : worker.platform === "instamart" ? "Swiggy Instamart" : "Zepto"}`);
       return;
     }
 
@@ -229,6 +229,39 @@ export default function LoginPage() {
                     />
                   </svg>
                 </button>
+
+                {/* Swiggy Instamart Button */}
+                <button
+                  onClick={() => handlePlatformSelect("instamart")}
+                  className="w-full flex items-center justify-between p-4 border-2 border-zinc-200 dark:border-zinc-700 rounded-xl hover:border-orange-400 hover:bg-orange-50 dark:hover:bg-orange-950/20 transition-all group"
+                >
+                  <div className="flex items-center">
+                    <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center mr-4">
+                      <span className="text-xl font-bold text-white">S</span>
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-zinc-900 dark:text-white">
+                        Swiggy Instamart
+                      </p>
+                      <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                        Continue with Swiggy Instamart account
+                      </p>
+                    </div>
+                  </div>
+                  <svg
+                    className="w-5 h-5 text-zinc-400 group-hover:text-orange-500 transition-colors"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 5l7 7-7 7"
+                    />
+                  </svg>
+                </button>
               </div>
             </div>
           )}
@@ -238,25 +271,25 @@ export default function LoginPage() {
             <div>
               <div className="flex items-center mb-4">
                 <div
-                  className={`w-10 h-10 rounded-xl flex items-center justify-center mr-3 ${
-                    selectedPlatform === "blinkit"
-                      ? "bg-yellow-400"
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center mr-3 ${selectedPlatform === "blinkit"
+                    ? "bg-yellow-400"
+                    : selectedPlatform === "instamart"
+                      ? "bg-orange-500"
                       : "bg-purple-600"
-                  }`}
+                    }`}
                 >
                   <span
-                    className={`text-lg font-bold ${
-                      selectedPlatform === "blinkit"
-                        ? "text-zinc-900"
-                        : "text-white"
-                    }`}
+                    className={`text-lg font-bold ${selectedPlatform === "blinkit"
+                      ? "text-zinc-900"
+                      : "text-white"
+                      }`}
                   >
-                    {selectedPlatform === "blinkit" ? "B" : "Z"}
+                    {selectedPlatform === "blinkit" ? "B" : selectedPlatform === "instamart" ? "S" : "Z"}
                   </span>
                 </div>
                 <div>
                   <p className="font-medium text-zinc-900 dark:text-white">
-                    {selectedPlatform === "blinkit" ? "Blinkit" : "Zepto"}{" "}
+                    {selectedPlatform === "blinkit" ? "Blinkit" : selectedPlatform === "instamart" ? "Swiggy Instamart" : "Zepto"}{" "}
                     Account
                   </p>
                 </div>
@@ -279,6 +312,10 @@ export default function LoginPage() {
                     <li><strong>9876543210</strong> - Shield Plan (normal)</li>
                     <li><strong>9111222333</strong> - Starter Plan (limited triggers)</li>
                     <li><strong>9777888999</strong> - Weekly cap exhausted</li>
+                  </ul>
+                ) : selectedPlatform === "instamart" ? (
+                  <ul className="text-xs text-orange-600 dark:text-orange-400 space-y-1">
+                    <li><strong>9222333444</strong> - Shield Plan (normal)</li>
                   </ul>
                 ) : (
                   <ul className="text-xs text-purple-600 dark:text-purple-400 space-y-1">

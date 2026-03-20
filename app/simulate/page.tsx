@@ -196,9 +196,8 @@ export default function SimulatePage() {
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="flex items-center">
               <div
-                className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold mr-4 ${
-                  worker.platform === "blinkit" ? "bg-yellow-400 text-zinc-900" : "bg-purple-600"
-                }`}
+                className={`w-12 h-12 rounded-full flex items-center justify-center text-white font-semibold mr-4 ${worker.platform === "blinkit" ? "bg-yellow-400 text-zinc-900" : worker.platform === "instamart" ? "bg-orange-500" : "bg-purple-600"
+                  }`}
               >
                 {worker.name.charAt(0)}
               </div>
@@ -233,11 +232,10 @@ export default function SimulatePage() {
             </div>
             <button
               onClick={toggleGPSLocation}
-              className={`px-4 py-2 rounded-lg font-medium text-sm ${
-                isOutsideZone
-                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                  : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-              }`}
+              className={`px-4 py-2 rounded-lg font-medium text-sm ${isOutsideZone
+                ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                }`}
             >
               {isOutsideZone ? "Move Back to Zone" : "Simulate Outside Zone"}
             </button>
@@ -262,13 +260,12 @@ export default function SimulatePage() {
                 return (
                   <div
                     key={type}
-                    className={`p-4 rounded-lg border-2 transition-all ${
-                      isActive
-                        ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
-                        : isCovered
+                    className={`p-4 rounded-lg border-2 transition-all ${isActive
+                      ? "border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20"
+                      : isCovered
                         ? "border-zinc-200 dark:border-zinc-700 hover:border-blue-400"
                         : "border-zinc-200 dark:border-zinc-700 opacity-50"
-                    }`}
+                      }`}
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
@@ -478,7 +475,7 @@ export default function SimulatePage() {
             </div>
             <div className="p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
               <p className="text-sm font-medium text-zinc-900 dark:text-white">2. Platform Session</p>
-              <p className="text-xs text-zinc-500 dark:text-zinc-400">Active session on Blinkit/Zepto</p>
+              <p className="text-xs text-zinc-500 dark:text-zinc-400">Active session on Blinkit/Zepto/Instamart</p>
             </div>
             <div className="p-3 bg-zinc-50 dark:bg-zinc-800 rounded-lg">
               <p className="text-sm font-medium text-zinc-900 dark:text-white">3. Cooling Period</p>

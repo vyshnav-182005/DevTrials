@@ -50,7 +50,7 @@ export default function Home() {
           </h1>
 
           <p className="text-lg md:text-xl text-zinc-600 dark:text-zinc-400 mb-8 max-w-2xl mx-auto">
-            Designed for Blinkit and Zepto delivery partners. Get automatic
+            Designed for Blinkit, Zepto, and Swiggy Instamart delivery partners. Get automatic
             payouts for accidents, bad weather, and unforeseen delays. No
             paperwork, no waiting.
           </p>
@@ -96,7 +96,7 @@ export default function Home() {
               Connect Your Account
             </h3>
             <p className="text-zinc-600 dark:text-zinc-400">
-              Link your Blinkit or Zepto delivery account in seconds. We verify
+              Link your Blinkit, Zepto, or Swiggy Instamart delivery account in seconds. We verify
               your rider status automatically.
             </p>
           </div>
@@ -172,6 +172,14 @@ export default function Home() {
               </div>
               <span className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">
                 Zepto
+              </span>
+            </div>
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-orange-500 rounded-lg flex items-center justify-center mr-2">
+                <span className="text-lg font-bold text-white">S</span>
+              </div>
+              <span className="text-xl font-semibold text-zinc-700 dark:text-zinc-300">
+                Swiggy Instamart
               </span>
             </div>
           </div>
