@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Zepto-style Z with speed effect -->
+  <path d="M25 25H75L30 75H80" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Speed lines -->
+  <path d="M15 40H25" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
+  <path d="M10 55H22" stroke="white" stroke-width="4" stroke-linecap="round" opacity="0.5"/>
+</svg>

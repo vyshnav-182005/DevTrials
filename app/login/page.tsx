@@ -1,18 +1,44 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { Worker } from "@/lib/database.types";
 
 type Platform = "blinkit" | "zepto" | "instamart" | null;
 type Step = "platform" | "phone" | "otp";
 
-// Demo phone numbers for quick reference
-const DEMO_PHONES = {
-  blinkit: ["9876543210", "9111222333", "9777888999"],
-  zepto: ["9988776655", "9444555666"],
-  instamart: ["9222333444"],
-};
+// Platform logo components
+const BlinkitLogo = ({ size = 32 }: { size?: number }) => (
+  <Image
+    src="/logos/blinkit.svg"
+    alt="Blinkit"
+    width={size}
+    height={size}
+    className="object-contain"
+  />
+);
+
+const ZeptoLogo = ({ size = 32 }: { size?: number }) => (
+  <Image
+    src="/logos/zepto.svg"
+    alt="Zepto"
+    width={size}
+    height={size}
+    className="object-contain"
+  />
+);
+
+const SwiggyLogo = ({ size = 32 }: { size?: number }) => (
+  <Image
+    src="/logos/swiggy.svg"
+    alt="Swiggy Instamart"
+    width={size}
+    height={size}
+    className="object-contain"
+  />
+);
 
 export default function LoginPage() {
   const [selectedPlatform, setSelectedPlatform] = useState<Platform>(null);
@@ -48,22 +74,23 @@ export default function LoginPage() {
         .single();
 
       if (fetchError || !data) {
-        const demoPhone = selectedPlatform ? DEMO_PHONES[selectedPlatform][0] : "9876543210";
-        setError(`No account found. Try demo: ${demoPhone}`);
+        setError("No account found with this phone number. Please check and try again.");
         setIsLoading(false);
         return;
       }
 
+      const workerData = data as Worker;
+
       // Check if platform matches
-      if (data.platform !== selectedPlatform) {
-        const platformName = data.platform === "blinkit" ? "Blinkit" :
-                            data.platform === "instamart" ? "Swiggy Instamart" : "Zepto";
+      if (workerData.platform !== selectedPlatform) {
+        const platformName = workerData.platform === "blinkit" ? "Blinkit" :
+                            workerData.platform === "instamart" ? "Swiggy Instamart" : "Zepto";
         setError(`This number is registered with ${platformName}`);
         setIsLoading(false);
         return;
       }
 
-      setWorker(data);
+      setWorker(workerData);
       // Simulate OTP send (in production, use Supabase Auth with phone)
       await new Promise((resolve) => setTimeout(resolve, 1000));
       setIsLoading(false);
@@ -200,7 +227,7 @@ export default function LoginPage() {
                 >
                   <div className="flex items-center">
                     <div className="w-12 h-12 bg-yellow-400 rounded-xl flex items-center justify-center mr-4">
-                      <span className="text-xl font-bold text-zinc-900">B</span>
+                      <BlinkitLogo size={28} />
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-zinc-900 dark:text-white">
@@ -233,7 +260,7 @@ export default function LoginPage() {
                 >
                   <div className="flex items-center">
                     <div className="w-12 h-12 bg-purple-600 rounded-xl flex items-center justify-center mr-4">
-                      <span className="text-xl font-bold text-white">Z</span>
+                      <ZeptoLogo size={28} />
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-zinc-900 dark:text-white">
@@ -266,7 +293,7 @@ export default function LoginPage() {
                 >
                   <div className="flex items-center">
                     <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center mr-4">
-                      <span className="text-xl font-bold text-white">S</span>
+                      <SwiggyLogo size={28} />
                     </div>
                     <div className="text-left">
                       <p className="font-semibold text-zinc-900 dark:text-white">
@@ -307,14 +334,9 @@ export default function LoginPage() {
                       : "bg-purple-600"
                     }`}
                 >
-                  <span
-                    className={`text-lg font-bold ${selectedPlatform === "blinkit"
-                      ? "text-zinc-900"
-                      : "text-white"
-                      }`}
-                  >
-                    {selectedPlatform === "blinkit" ? "B" : selectedPlatform === "instamart" ? "S" : "Z"}
-                  </span>
+                  {selectedPlatform === "blinkit" && <BlinkitLogo size={24} />}
+                  {selectedPlatform === "zepto" && <ZeptoLogo size={24} />}
+                  {selectedPlatform === "instamart" && <SwiggyLogo size={24} />}
                 </div>
                 <div>
                   <p className="font-medium text-zinc-900 dark:text-white">
@@ -330,29 +352,6 @@ export default function LoginPage() {
               <p className="text-zinc-600 dark:text-zinc-400 mb-4">
                 We&apos;ll send an OTP to verify your account
               </p>
-
-              {/* Demo hint */}
-              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                <p className="text-sm text-blue-700 dark:text-blue-300 font-medium mb-2">
-                  Demo Accounts:
-                </p>
-                {selectedPlatform === "blinkit" ? (
-                  <ul className="text-xs text-blue-600 dark:text-blue-400 space-y-1">
-                    <li><strong>9876543210</strong> - Shield Plan (normal)</li>
-                    <li><strong>9111222333</strong> - Starter Plan (limited triggers)</li>
-                    <li><strong>9777888999</strong> - Weekly cap exhausted</li>
-                  </ul>
-                ) : selectedPlatform === "instamart" ? (
-                  <ul className="text-xs text-orange-600 dark:text-orange-400 space-y-1">
-                    <li><strong>9222333444</strong> - Shield Plan (normal)</li>
-                  </ul>
-                ) : (
-                  <ul className="text-xs text-purple-600 dark:text-purple-400 space-y-1">
-                    <li><strong>9988776655</strong> - Pro Plan (normal)</li>
-                    <li><strong>9444555666</strong> - In 48hr cooling period</li>
-                  </ul>
-                )}
-              </div>
 
               <form onSubmit={handlePhoneSubmit}>
                 <div className="mb-4">
@@ -498,19 +497,19 @@ export default function LoginPage() {
         <div className="text-center mt-6">
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             By continuing, you agree to our{" "}
-            <a
+            <Link
               href="/terms"
               className="text-blue-600 dark:text-blue-400 hover:underline"
             >
               Terms of Service
-            </a>{" "}
+            </Link>{" "}
             and{" "}
-            <a
+            <Link
               href="/privacy"
               className="text-blue-600 dark:text-blue-400 hover:underline"
             >
               Privacy Policy
-            </a>
+            </Link>
           </p>
         </div>
 

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none">
+  <!-- Swiggy-style S curve -->
+  <path d="M70 25C70 25 60 20 50 20C35 20 25 30 25 40C25 50 35 55 50 58C65 61 75 66 75 76C75 86 65 92 50 92C35 92 25 85 25 85" stroke="white" stroke-width="12" stroke-linecap="round" fill="none"/>
+  <!-- Dot accent -->
+  <circle cx="75" cy="25" r="6" fill="white"/>
+</svg>
