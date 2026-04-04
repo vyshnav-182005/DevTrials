@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Chatbot from "@/app/components/Chatbot";
 import type {
   Worker,
   InsuranceSubscription,
@@ -750,6 +751,7 @@ export default function UserDashboardPage() {
           </div>
         </div>
       )}
+      <Chatbot workerId={worker.id} />
     </div>
   );
 }
