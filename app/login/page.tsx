@@ -3,7 +3,6 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
 import type { Worker } from "@/lib/database.types";
 
 type Platform = "blinkit" | "zepto" | "instamart" | null;
@@ -47,16 +46,27 @@ export default function LoginPage() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [otpInfo, setOtpInfo] = useState("");
+  const [debugOtp, setDebugOtp] = useState("");
+  const [otpSessionId, setOtpSessionId] = useState("");
   const [worker, setWorker] = useState<Worker | null>(null);
 
   const handlePlatformSelect = (platform: Platform) => {
     setSelectedPlatform(platform);
     setStep("phone");
     setError("");
+    setOtpInfo("");
+    setDebugOtp("");
+    setOtpSessionId("");
   };
 
   const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!selectedPlatform) {
+      setError("Please select a platform to continue");
+      return;
+    }
+
     if (phoneNumber.length !== 10) {
       setError("Please enter a valid 10-digit phone number");
       return;
@@ -64,35 +74,37 @@ export default function LoginPage() {
 
     setIsLoading(true);
     setError("");
+    setOtpInfo("");
+    setDebugOtp("");
 
     try {
-      // Fetch worker from Supabase
-      const { data, error: fetchError } = await supabase
-        .from("workers")
-        .select("*")
-        .eq("phone", phoneNumber)
-        .single();
+      const res = await fetch("/api/login/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: phoneNumber,
+          platform: selectedPlatform,
+        }),
+      });
 
-      if (fetchError || !data) {
-        setError("No account found with this phone number. Please check and try again.");
+      const payload = (await res.json()) as {
+        error?: string;
+        sessionId?: string;
+        smsDispatched?: boolean;
+        warning?: string;
+        debugOtp?: string;
+      };
+
+      if (!res.ok || !payload.sessionId) {
+        setError(payload.error || "Failed to send OTP. Please try again.");
         setIsLoading(false);
         return;
       }
 
-      const workerData = data as Worker;
-
-      // Check if platform matches
-      if (workerData.platform !== selectedPlatform) {
-        const platformName = workerData.platform === "blinkit" ? "Blinkit" :
-                            workerData.platform === "instamart" ? "Swiggy Instamart" : "Zepto";
-        setError(`This number is registered with ${platformName}`);
-        setIsLoading(false);
-        return;
-      }
-
-      setWorker(workerData);
-      // Simulate OTP send (in production, use Supabase Auth with phone)
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setOtpSessionId(payload.sessionId);
+      setOtp(["", "", "", "", "", ""]);
+      setDebugOtp(payload.debugOtp || "");
+      setOtpInfo(payload.smsDispatched ? "OTP sent to your mobile number." : (payload.warning || "OTP generated."));
       setIsLoading(false);
       setStep("otp");
     } catch {
@@ -123,35 +135,126 @@ export default function LoginPage() {
 
   const handleOtpSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!selectedPlatform) {
+      setError("Platform selection is missing. Please try again.");
+      setStep("platform");
+      return;
+    }
+
+    if (!otpSessionId) {
+      setError("OTP session expired. Please request a new OTP.");
+      setStep("phone");
+      return;
+    }
+
     const otpValue = otp.join("");
     if (otpValue.length !== 6) {
       setError("Please enter the complete OTP");
       return;
     }
+
     setIsLoading(true);
     setError("");
-    // Simulate verification (any 6-digit OTP works for demo)
-    await new Promise((resolve) => setTimeout(resolve, 1500));
 
-    // Store worker info for dashboard
-    if (worker) {
-      localStorage.setItem("workerId", worker.id);
-      localStorage.setItem("userPhone", phoneNumber);
-      localStorage.setItem("userPlatform", selectedPlatform || "");
+    try {
+      const res = await fetch("/api/login/verify-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: phoneNumber,
+          platform: selectedPlatform,
+          otp: otpValue,
+          otpSessionId,
+        }),
+      });
+
+      const payload = (await res.json()) as { error?: string; worker?: Worker };
+      if (!res.ok || !payload.worker) {
+        setError(payload.error || "OTP verification failed. Please try again.");
+        setIsLoading(false);
+        return;
+      }
+
+      setWorker(payload.worker);
+      localStorage.setItem("workerId", payload.worker.id);
+      localStorage.setItem("userPhone", payload.worker.phone);
+      localStorage.setItem("userPlatform", payload.worker.platform);
+
+      setIsLoading(false);
+      window.location.href = "/dashboard";
+    } catch {
+      setError("OTP verification failed. Please try again.");
+      setIsLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!selectedPlatform) {
+      setError("Please select a platform to continue");
+      setStep("platform");
+      return;
     }
 
-    setIsLoading(false);
-    // Redirect to dashboard on success
-    window.location.href = "/dashboard";
+    if (phoneNumber.length !== 10) {
+      setError("Please enter a valid 10-digit phone number");
+      setStep("phone");
+      return;
+    }
+
+    setIsLoading(true);
+    setError("");
+    setOtpInfo("");
+    setDebugOtp("");
+
+    try {
+      const res = await fetch("/api/login/send-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          phone: phoneNumber,
+          platform: selectedPlatform,
+        }),
+      });
+
+      const payload = (await res.json()) as {
+        error?: string;
+        sessionId?: string;
+        smsDispatched?: boolean;
+        warning?: string;
+        debugOtp?: string;
+      };
+
+      if (!res.ok || !payload.sessionId) {
+        setError(payload.error || "Failed to resend OTP.");
+        setIsLoading(false);
+        return;
+      }
+
+      setOtpSessionId(payload.sessionId);
+      setOtp(["", "", "", "", "", ""]);
+      setDebugOtp(payload.debugOtp || "");
+      setOtpInfo(payload.smsDispatched ? "OTP resent to your mobile number." : (payload.warning || "OTP regenerated."));
+      setIsLoading(false);
+    } catch {
+      setError("Failed to resend OTP.");
+      setIsLoading(false);
+    }
   };
 
   const goBack = () => {
     if (step === "otp") {
       setStep("phone");
       setOtp(["", "", "", "", "", ""]);
+      setOtpInfo("");
+      setDebugOtp("");
+      setOtpSessionId("");
     } else if (step === "phone") {
       setStep("platform");
       setPhoneNumber("");
+      setOtpInfo("");
+      setDebugOtp("");
+      setOtpSessionId("");
     }
     setError("");
   };
@@ -449,6 +552,16 @@ export default function LoginPage() {
                   </p>
                 )}
 
+                {otpInfo && (
+                  <p className="mb-4 text-sm text-emerald-600 text-center">{otpInfo}</p>
+                )}
+
+                {debugOtp && (
+                  <p className="mb-4 text-xs text-amber-600 text-center">
+                    Dev OTP (SMS not configured): {debugOtp}
+                  </p>
+                )}
+
                 <button
                   type="submit"
                   disabled={isLoading || otp.join("").length !== 6}
@@ -484,6 +597,8 @@ export default function LoginPage() {
 
                 <button
                   type="button"
+                  onClick={handleResendOtp}
+                  disabled={isLoading}
                   className="w-full mt-3 py-2 text-sm text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white transition-colors"
                 >
                   Didn&apos;t receive OTP? Resend
