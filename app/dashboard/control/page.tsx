@@ -62,6 +62,16 @@ export default function ControlDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<"overview" | "claims" | "fraud" | "zones">("overview");
+  
+  // Insurance tier pricing state
+  const [tierPrices, setTierPrices] = useState({
+    starter: 29,
+    shield: 59,
+    pro: 99,
+  });
+  const [editingPrices, setEditingPrices] = useState(false);
+  const [tempPrices, setTempPrices] = useState({ ...tierPrices });
+  const [priceUpdateStatus, setPriceUpdateStatus] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchControlData() {
@@ -289,82 +299,171 @@ export default function ControlDashboardPage() {
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-              {/* System Audit Stream */}
-              <div>
+              {/* Insurance Tier Pricing */}
+              <div className="bg-gradient-to-br from-blue-950/30 to-zinc-900 border border-blue-500/20 p-5 rounded-xl">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-bold text-zinc-400 flex items-center gap-2">
-                    <span className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></span>
-                    SYSTEM_AUDIT_STREAM
+                  <h3 className="text-sm font-bold text-blue-400 flex items-center gap-2">
+                    💰 INSURANCE TIER PRICING
                   </h3>
-                  <span className="text-[10px] text-zinc-600">LIVE_FEED</span>
+                  {!editingPrices ? (
+                    <button 
+                      onClick={() => {
+                        setTempPrices({ ...tierPrices });
+                        setEditingPrices(true);
+                        setPriceUpdateStatus(null);
+                      }}
+                      className="text-[10px] px-3 py-1 bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors"
+                    >
+                      EDIT PRICES
+                    </button>
+                  ) : (
+                    <div className="flex gap-2">
+                      <button 
+                        onClick={() => {
+                          setTierPrices({ ...tempPrices });
+                          setEditingPrices(false);
+                          setPriceUpdateStatus("Prices updated successfully!");
+                          setTimeout(() => setPriceUpdateStatus(null), 3000);
+                        }}
+                        className="text-[10px] px-3 py-1 bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors"
+                      >
+                        SAVE
+                      </button>
+                      <button 
+                        onClick={() => {
+                          setEditingPrices(false);
+                          setTempPrices({ ...tierPrices });
+                        }}
+                        className="text-[10px] px-3 py-1 bg-zinc-600 hover:bg-zinc-700 rounded-lg transition-colors"
+                      >
+                        CANCEL
+                      </button>
+                    </div>
+                  )}
                 </div>
-                <div className="bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden text-[11px]">
-                  <div className="p-2 border-b border-zinc-800 bg-zinc-900/50 text-zinc-500 grid grid-cols-4 gap-4">
-                    <span>TIME</span>
-                    <span>EVENT</span>
-                    <span className="col-span-2">DETAILS</span>
+                
+                {priceUpdateStatus && (
+                  <div className="mb-4 p-2 bg-emerald-900/30 border border-emerald-500/30 rounded-lg text-emerald-400 text-xs text-center">
+                    {priceUpdateStatus}
                   </div>
-                  <div className="h-[300px] overflow-y-auto">
-                    {data?.recentLogs.map(log => (
-                      <div key={log.id} className="p-3 border-b border-zinc-900 hover:bg-zinc-900/50 transition-colors group grid grid-cols-4 gap-4">
-                        <span className="text-zinc-600">{new Date(log.created_at).toLocaleTimeString()}</span>
-                        <span className={`font-bold ${
-                          log.action.includes('FRAUD') || log.action.includes('ALERT') ? 'text-red-500' :
-                          log.action.includes('APPROVED') ? 'text-emerald-500' :
-                          log.action.includes('PAYOUT') ? 'text-blue-500' : 'text-amber-500'
-                        }`}>{log.action}</span>
-                        <span className="col-span-2 text-zinc-300 opacity-80 group-hover:opacity-100 truncate">
-                          {String(log.metadata?.info || log.entity_type)}
-                        </span>
+                )}
+                
+                <div className="space-y-4">
+                  {/* Starter Tier */}
+                  <div className="p-4 bg-zinc-800/50 rounded-lg border border-zinc-700">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 bg-zinc-500 rounded-full"></span>
+                        <span className="text-sm font-bold text-zinc-300">STARTER</span>
                       </div>
-                    ))}
+                      {editingPrices ? (
+                        <div className="flex items-center gap-1">
+                          <span className="text-zinc-500">₹</span>
+                          <input
+                            type="number"
+                            value={tempPrices.starter}
+                            onChange={(e) => setTempPrices({ ...tempPrices, starter: Number(e.target.value) })}
+                            className="w-20 bg-zinc-900 border border-zinc-600 rounded px-2 py-1 text-right text-lg font-bold text-zinc-300 focus:outline-none focus:border-blue-500"
+                          />
+                          <span className="text-zinc-500 text-xs">/mo</span>
+                        </div>
+                      ) : (
+                        <span className="text-xl font-bold text-zinc-300">₹{tierPrices.starter}<span className="text-xs text-zinc-500">/mo</span></span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-zinc-500">Basic coverage for new gig workers</p>
+                  </div>
+
+                  {/* Shield Tier */}
+                  <div className="p-4 bg-zinc-800/50 rounded-lg border border-amber-500/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 bg-amber-500 rounded-full"></span>
+                        <span className="text-sm font-bold text-amber-400">SHIELD</span>
+                        <span className="text-[9px] bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full">POPULAR</span>
+                      </div>
+                      {editingPrices ? (
+                        <div className="flex items-center gap-1">
+                          <span className="text-zinc-500">₹</span>
+                          <input
+                            type="number"
+                            value={tempPrices.shield}
+                            onChange={(e) => setTempPrices({ ...tempPrices, shield: Number(e.target.value) })}
+                            className="w-20 bg-zinc-900 border border-amber-600 rounded px-2 py-1 text-right text-lg font-bold text-amber-400 focus:outline-none focus:border-amber-400"
+                          />
+                          <span className="text-zinc-500 text-xs">/mo</span>
+                        </div>
+                      ) : (
+                        <span className="text-xl font-bold text-amber-400">₹{tierPrices.shield}<span className="text-xs text-zinc-500">/mo</span></span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-zinc-500">Enhanced protection with faster claims</p>
+                  </div>
+
+                  {/* Pro Tier */}
+                  <div className="p-4 bg-zinc-800/50 rounded-lg border border-emerald-500/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-3 h-3 bg-emerald-500 rounded-full"></span>
+                        <span className="text-sm font-bold text-emerald-400">PRO</span>
+                        <span className="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full">PREMIUM</span>
+                      </div>
+                      {editingPrices ? (
+                        <div className="flex items-center gap-1">
+                          <span className="text-zinc-500">₹</span>
+                          <input
+                            type="number"
+                            value={tempPrices.pro}
+                            onChange={(e) => setTempPrices({ ...tempPrices, pro: Number(e.target.value) })}
+                            className="w-20 bg-zinc-900 border border-emerald-600 rounded px-2 py-1 text-right text-lg font-bold text-emerald-400 focus:outline-none focus:border-emerald-400"
+                          />
+                          <span className="text-zinc-500 text-xs">/mo</span>
+                        </div>
+                      ) : (
+                        <span className="text-xl font-bold text-emerald-400">₹{tierPrices.pro}<span className="text-xs text-zinc-500">/mo</span></span>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-zinc-500">Complete coverage with priority support</p>
                   </div>
                 </div>
               </div>
 
-              {/* Admin Controls */}
-              <div className="flex flex-col gap-4">
-                <div className="bg-gradient-to-br from-emerald-950/30 to-zinc-900 border border-emerald-500/20 p-5 rounded-xl">
-                  <h3 className="text-sm font-bold mb-4 text-emerald-400">⚙️ ADMIN CONTROLS</h3>
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg">
-                      <span className="text-xs">Auto-Claim Threshold</span>
-                      <span className="text-emerald-400 font-bold">75%</span>
-                    </div>
-                    <div className="flex items-center justify-between p-3 bg-zinc-800/50 rounded-lg">
-                      <span className="text-xs">Fraud Detection Sensitivity</span>
-                      <span className="text-amber-400 font-bold">HIGH</span>
-                    </div>
+              {/* Financial Summary */}
+              <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl">
+                <h3 className="text-sm font-bold text-zinc-400 mb-4">💸 FINANCIAL METRICS</h3>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-zinc-500">Total Payouts</span>
+                    <span className="font-bold text-emerald-400">{formatCurrency(data?.payoutMetrics?.total || 0)}</span>
                   </div>
-                  <div className="flex gap-3 mt-4">
-                    <button className="flex-1 py-3 bg-emerald-600 text-white font-bold text-xs hover:bg-emerald-700 transition-colors rounded-lg">
-                      ACTIVATE_FLOOD_PROTOCOL
-                    </button>
-                    <button className="flex-1 py-3 border border-red-500/50 text-red-400 text-xs font-bold hover:bg-red-900/30 transition-colors rounded-lg">
-                      PAUSE_PAYOUTS
-                    </button>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-zinc-500">Processing</span>
+                    <span className="font-bold text-yellow-400">{formatCurrency(data?.payoutMetrics?.processing || 0)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-zinc-500">Completed</span>
+                    <span className="font-bold text-emerald-400">{formatCurrency(data?.payoutMetrics?.completed || 0)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-zinc-500">Failed</span>
+                    <span className="font-bold text-red-400">{formatCurrency(data?.payoutMetrics?.failed || 0)}</span>
                   </div>
                 </div>
-
-                {/* Financial Summary */}
-                <div className="bg-zinc-900 border border-zinc-800 p-5 rounded-xl flex-1">
-                  <h3 className="text-sm font-bold text-zinc-400 mb-4">💸 FINANCIAL METRICS</h3>
-                  <div className="space-y-3">
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-zinc-500">Total Payouts</span>
-                      <span className="font-bold text-emerald-400">{formatCurrency(data?.payoutMetrics?.total || 0)}</span>
+                
+                <div className="mt-6 pt-4 border-t border-zinc-800">
+                  <h4 className="text-xs font-bold text-zinc-500 mb-3">CURRENT TIER REVENUE (EST.)</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-zinc-500">Starter ({Math.floor((data?.globalStats.active_subscriptions || 0) * 0.3)} subs)</span>
+                      <span className="text-zinc-400">{formatCurrency(Math.floor((data?.globalStats.active_subscriptions || 0) * 0.3) * tierPrices.starter)}</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-zinc-500">Processing</span>
-                      <span className="font-bold text-yellow-400">{formatCurrency(data?.payoutMetrics?.processing || 0)}</span>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-zinc-500">Shield ({Math.floor((data?.globalStats.active_subscriptions || 0) * 0.5)} subs)</span>
+                      <span className="text-amber-400">{formatCurrency(Math.floor((data?.globalStats.active_subscriptions || 0) * 0.5) * tierPrices.shield)}</span>
                     </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-zinc-500">Completed</span>
-                      <span className="font-bold text-emerald-400">{formatCurrency(data?.payoutMetrics?.completed || 0)}</span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs text-zinc-500">Failed</span>
-                      <span className="font-bold text-red-400">{formatCurrency(data?.payoutMetrics?.failed || 0)}</span>
+                    <div className="flex justify-between items-center text-xs">
+                      <span className="text-zinc-500">Pro ({Math.floor((data?.globalStats.active_subscriptions || 0) * 0.2)} subs)</span>
+                      <span className="text-emerald-400">{formatCurrency(Math.floor((data?.globalStats.active_subscriptions || 0) * 0.2) * tierPrices.pro)}</span>
                     </div>
                   </div>
                 </div>
