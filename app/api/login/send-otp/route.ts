@@ -29,11 +29,14 @@ export async function POST(request: Request) {
 
     const admin = createAdminClient();
 
+    // Normalize phone to include country code for database lookup
+    const phoneWithCountryCode = `+91${phone}`;
+
     // Check if user exists in the users table
     const { data: userData, error: userError } = await admin
       .from("users")
       .select("id, name, phone, role")
-      .eq("phone", phone)
+      .eq("phone", phoneWithCountryCode)
       .maybeSingle();
 
     if (userError) {

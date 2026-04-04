@@ -45,10 +45,14 @@ export async function POST(request: Request) {
     }
 
     const admin = createAdminClient();
+
+    // Normalize phone to include country code for database lookup
+    const phoneWithCountryCode = `+91${phone}`;
+
     const { data: user, error: userError } = await admin
       .from("users")
       .select("*")
-      .eq("phone", phone)
+      .eq("phone", phoneWithCountryCode)
       .maybeSingle();
 
     if (userError) {

@@ -47,6 +47,18 @@ CREATE TABLE delivery_zones (
 -- =========================================
 -- WORKERS
 -- =========================================
+
+CREATE TYPE insurance_plan_type AS ENUM ('starter', 'shield', 'pro');
+
+CREATE TABLE worker_insurance (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    worker_id UUID UNIQUE REFERENCES workers(id) ON DELETE CASCADE,
+
+    plan insurance_plan_type NOT NULL,
+    start_date TIMESTAMPTZ DEFAULT NOW(),
+
+    created_at TIMESTAMPTZ DEFAULT NOW()
+);
 CREATE TABLE workers (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID UNIQUE REFERENCES users(id) ON DELETE CASCADE,
