@@ -9,8 +9,21 @@ interface LoginSendOtpPayload {
   role?: UserRole;
 }
 
+interface DbError {
+  code?: string;
+  message?: string;
+}
+
 const PHONE_REGEX = /^\d{10}$/;
 const PLATFORM_VALUES: Platform[] = ["blinkit", "zepto", "instamart"];
+
+function isPermissionDenied(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+  const dbError = error as DbError;
+  return dbError.code === "42501" || (dbError.message || "").toLowerCase().includes("permission denied");
+}
 
 export async function POST(request: Request) {
   try {
@@ -41,6 +54,12 @@ export async function POST(request: Request) {
 
     if (userError) {
       console.error("User lookup error:", userError);
+      if (isPermissionDenied(userError)) {
+        return NextResponse.json(
+          { error: "Database permissions are not configured for login checks. Apply latest Supabase migrations and verify service role key." },
+          { status: 500 }
+        );
+      }
       return NextResponse.json({ error: userError.message }, { status: 500 });
     }
 
@@ -117,8 +136,9 @@ export async function POST(request: Request) {
       debugOtp: otp,
       warning: "Development mode: OTP displayed on screen",
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Login OTP error:", error);
-    return NextResponse.json({ error: "Failed to send OTP" }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Failed to send OTP";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
