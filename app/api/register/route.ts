@@ -25,6 +25,10 @@ function normalizeIndianPhone(phone: string) {
   return `+91${phone}`;
 }
 
+function getPhoneLookupValues(phone: string): string[] {
+  return [phone, normalizeIndianPhone(phone)];
+}
+
 function getErrorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
@@ -106,13 +110,14 @@ export async function POST(request: Request) {
     }
 
     const phoneWithCountryCode = normalizeIndianPhone(phone);
+    const phoneLookupValues = getPhoneLookupValues(phone);
     const admin = createAdminClient() as any;
 
     // Check existing user in users table
     const { data: existingUser, error: existingUserError } = await admin
       .from("users")
       .select("id")
-      .eq("phone", phoneWithCountryCode)
+      .in("phone", phoneLookupValues)
       .maybeSingle();
 
     if (existingUserError) {

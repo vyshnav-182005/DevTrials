@@ -181,7 +181,6 @@ export async function GET(request: Request) {
         approvedClaims: approvedClaims.length,
         rejectedClaims: rejectedClaims.length,
         totalPayouts: totalPayoutAmount,
-        lossRatio: Math.min(100, Math.round((totalPayoutAmount / (workers.length * 500 || 1)) * 100)), // Mock loss ratio calc
         avgClaimAmount: avgClaimAmount,
       },
     };

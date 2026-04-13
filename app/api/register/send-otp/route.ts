@@ -17,6 +17,10 @@ function normalizeIndianPhone(phone: string) {
   return `+91${phone}`;
 }
 
+function getPhoneLookupValues(phone: string): string[] {
+  return [phone, normalizeIndianPhone(phone)];
+}
+
 function isPermissionDenied(error: unknown): boolean {
   if (!error || typeof error !== "object") {
     return false;
@@ -37,7 +41,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const phoneWithCountryCode = normalizeIndianPhone(phone);
+    const phoneLookupValues = getPhoneLookupValues(phone);
 
     const admin = createAdminClient();
     
@@ -45,7 +49,7 @@ export async function POST(request: Request) {
     const { data: existingUser, error: existingUserError } = await admin
       .from("users")
       .select("id")
-      .eq("phone", phoneWithCountryCode)
+      .in("phone", phoneLookupValues)
       .maybeSingle();
 
     if (existingUserError) {

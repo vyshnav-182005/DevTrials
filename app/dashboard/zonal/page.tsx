@@ -43,7 +43,6 @@ interface ZonalDashboardData {
     approvedClaims: number;
     rejectedClaims: number;
     totalPayouts: number;
-    lossRatio: number;
     avgClaimAmount: number;
   };
 }
@@ -216,7 +215,7 @@ export default function ZonalDashboardPage() {
         )}
 
         {/* Stats Grid */}
-        <div className="grid md:grid-cols-4 gap-4 mb-6">
+        <div className="grid md:grid-cols-3 gap-4 mb-6">
           {/* Active Workers */}
           <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
             <div className="flex items-center justify-between mb-2">
@@ -253,15 +252,6 @@ export default function ZonalDashboardPage() {
             <p className="text-xs text-zinc-500 mt-2">{data?.payoutsInProgress.length || 0} processing</p>
           </div>
 
-          {/* Zone Metrics */}
-          <div className="bg-white dark:bg-zinc-900 p-5 rounded-2xl border border-zinc-200 dark:border-zinc-800 shadow-sm">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-2xl">📊</span>
-              <span className="text-xs text-purple-600">METRICS</span>
-            </div>
-            <p className="text-3xl font-bold text-purple-600">{data?.zoneMetrics.lossRatio || 0}%</p>
-            <p className="text-xs text-zinc-500 mt-2">Loss Ratio</p>
-          </div>
         </div>
 
         {/* Flagged Claims Alert */}
@@ -419,12 +409,6 @@ export default function ZonalDashboardPage() {
               <div className="flex justify-between items-center">
                 <span className="text-zinc-600 dark:text-zinc-400">Avg. Claim Amount</span>
                 <span className="font-bold text-zinc-900 dark:text-white">{formatCurrency(data?.zoneMetrics.avgClaimAmount || 0)}</span>
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="text-zinc-600 dark:text-zinc-400">Loss Ratio</span>
-                <span className={`font-bold ${(data?.zoneMetrics.lossRatio || 0) > 80 ? "text-red-600" : "text-emerald-600"}`}>
-                  {data?.zoneMetrics.lossRatio || 0}%
-                </span>
               </div>
               <div className="pt-2 border-t border-zinc-200 dark:border-zinc-700">
                 <div className="flex justify-between items-center">

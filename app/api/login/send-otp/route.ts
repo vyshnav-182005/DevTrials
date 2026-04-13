@@ -17,6 +17,10 @@ interface DbError {
 const PHONE_REGEX = /^\d{10}$/;
 const PLATFORM_VALUES: Platform[] = ["blinkit", "zepto", "instamart"];
 
+function getPhoneLookupValues(phone: string): string[] {
+  return [phone, `+91${phone}`];
+}
+
 function isPermissionDenied(error: unknown): boolean {
   if (!error || typeof error !== "object") {
     return false;
@@ -42,14 +46,12 @@ export async function POST(request: Request) {
 
     const admin = createAdminClient();
 
-    // Normalize phone to include country code for database lookup
-    const phoneWithCountryCode = `+91${phone}`;
-
     // Check if user exists in the users table
+    const phoneLookupValues = getPhoneLookupValues(phone);
     const { data: userData, error: userError } = await admin
       .from("users")
       .select("id, name, phone, role")
-      .eq("phone", phoneWithCountryCode)
+      .in("phone", phoneLookupValues)
       .maybeSingle();
 
     if (userError) {
