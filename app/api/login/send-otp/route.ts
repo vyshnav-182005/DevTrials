@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
+import { getWorkerByPhone } from "@/lib/data";
 import { createRegistrationOtpSession } from "@/lib/registration-otp-store";
 import type { Platform, UserRole } from "@/lib/database.types";
 
@@ -12,6 +13,7 @@ interface LoginSendOtpPayload {
 interface DbError {
   code?: string;
   message?: string;
+  details?: string;
 }
 
 const PHONE_REGEX = /^\d{10}$/;
@@ -27,6 +29,22 @@ function isPermissionDenied(error: unknown): boolean {
   }
   const dbError = error as DbError;
   return dbError.code === "42501" || (dbError.message || "").toLowerCase().includes("permission denied");
+}
+
+function isSupabaseUnavailable(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const dbError = error as DbError;
+  const message = `${dbError.message || ""} ${dbError.details || ""}`.toLowerCase();
+  return (
+    message.includes("fetch failed") ||
+    message.includes("enotfound") ||
+    message.includes("521") ||
+    message.includes("web server is down") ||
+    message.includes("cloudflare")
+  );
 }
 
 export async function POST(request: Request) {
@@ -53,6 +71,51 @@ export async function POST(request: Request) {
       .select("id, name, phone, role")
       .in("phone", phoneLookupValues)
       .maybeSingle();
+
+    if (userError && isSupabaseUnavailable(userError)) {
+      if (requestedRole !== "worker") {
+        return NextResponse.json(
+          { error: "Supabase is currently unavailable. Admin login requires a reachable backend." },
+          { status: 503 }
+        );
+      }
+
+      const demoWorker = getWorkerByPhone(phone);
+      if (!demoWorker) {
+        return NextResponse.json(
+          { error: "Supabase is currently unavailable and no demo account exists for this phone number." },
+          { status: 503 }
+        );
+      }
+
+      if (!platform || !PLATFORM_VALUES.includes(platform)) {
+        return NextResponse.json({ error: "Please select your delivery platform" }, { status: 400 });
+      }
+
+      if (demoWorker.platform !== platform) {
+        const platformName =
+          demoWorker.platform === "blinkit"
+            ? "Blinkit"
+            : demoWorker.platform === "instamart"
+              ? "Swiggy Instamart"
+              : "Zepto";
+
+        return NextResponse.json(
+          { error: `This account is registered with ${platformName}. Please select the correct platform.` },
+          { status: 409 }
+        );
+      }
+
+      const { sessionId, otp, ttlSeconds } = createRegistrationOtpSession(phone);
+
+      return NextResponse.json({
+        sessionId,
+        ttlSeconds,
+        smsDispatched: false,
+        debugOtp: otp,
+        warning: "Supabase is unavailable. Using demo login data.",
+      });
+    }
 
     if (userError) {
       console.error("User lookup error:", userError);

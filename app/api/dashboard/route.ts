@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase";
+import { DELIVERY_ZONES, PLAN_TIERS, getWorkerByPhone, workers as demoWorkers, type Worker as DemoWorker } from "@/lib/data";
 import type {
   Worker,
   InsuranceSubscription,
@@ -50,6 +51,195 @@ interface DashboardResponse {
   todayEarnings: number;
   predictedEarnings: number;
   pendingClaim: Claim | null;
+}
+
+interface DbError {
+  code?: string;
+  message?: string;
+  details?: string;
+}
+
+function isSupabaseUnavailable(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const dbError = error as DbError;
+  const message = `${dbError.message || ""} ${dbError.details || ""}`.toLowerCase();
+  return (
+    message.includes("fetch failed") ||
+    message.includes("enotfound") ||
+    message.includes("521") ||
+    message.includes("web server is down") ||
+    message.includes("cloudflare")
+  );
+}
+
+function findDemoWorker(workerId: string | null, phone: string | null): DemoWorker | null {
+  if (phone) {
+    const worker = getWorkerByPhone(phone);
+    if (worker) {
+      return worker;
+    }
+  }
+
+  if (workerId) {
+    return Object.values(demoWorkers).find((worker) => worker.id === workerId) || null;
+  }
+
+  return null;
+}
+
+function buildDemoDashboardResponse(demoWorker: DemoWorker): DashboardResponse {
+  const planTier = demoWorker.insurance.planTier;
+  const plan = PLAN_TIERS[planTier];
+  const zone = DELIVERY_ZONES.find((entry) => entry.id === demoWorker.assignedZone) || null;
+  const nowIso = new Date().toISOString();
+  const createdAt = nowIso;
+
+  const worker = {
+    id: demoWorker.id,
+    user_id: demoWorker.id,
+    name: demoWorker.name,
+    platform: demoWorker.platform,
+    assigned_zone_id: demoWorker.assignedZone,
+    current_lat: demoWorker.currentLocation.lat,
+    current_lng: demoWorker.currentLocation.lng,
+    is_logged_in: demoWorker.isOnline,
+    fraud_score: demoWorker.fraudScore,
+    cooling_period_until: demoWorker.coolingPeriodUntil || null,
+    created_at: createdAt,
+    city: demoWorker.city,
+    upi_id: demoWorker.upiId,
+  } as Worker & { city?: string; upi_id?: string };
+
+  const subscription = {
+    id: `demo-subscription-${demoWorker.id}`,
+    worker_id: demoWorker.id,
+    plan_tier: planTier,
+    status: demoWorker.insurance.status,
+    valid_from: demoWorker.insurance.validFrom,
+    valid_until: demoWorker.insurance.validUntil,
+    auto_renewal: demoWorker.insurance.autoRenewal,
+    week_start_date: demoWorker.insurance.weekStartDate,
+    weekly_claim_total: demoWorker.insurance.weeklyClaimTotal,
+    premium_paid: demoWorker.insurance.weeklyPremium,
+    payment_reference: null,
+    created_at: createdAt,
+    updated_at: createdAt,
+  } as InsuranceSubscription;
+
+  const workerInsurance = {
+    id: `demo-worker-insurance-${demoWorker.id}`,
+    worker_id: demoWorker.id,
+    plan: planTier,
+    start_date: demoWorker.insurance.validFrom,
+    created_at: createdAt,
+  } as WorkerInsurance;
+
+  const insurancePlan = {
+    id: planTier,
+    name: planTier,
+    weekly_premium: plan.weeklyPremium,
+    coverage_percentage: planTier === "starter" ? 50 : planTier === "shield" ? 70 : 90,
+    weekly_max_payout: plan.weeklyCap,
+    claim_wait_minutes: plan.waitingPeriod,
+    includes_platform_outage: planTier === "pro",
+    description: `${plan.name} demo plan for local fallback mode`,
+    created_at: createdAt,
+  } as InsurancePlan;
+
+  const vehicle = {
+    id: `demo-vehicle-${demoWorker.id}`,
+    worker_id: demoWorker.id,
+    vehicle_type: demoWorker.vehicle.type,
+    registration_number: demoWorker.vehicle.registrationNumber || null,
+    is_primary: true,
+    created_at: createdAt,
+  } as WorkerVehicle;
+
+  const claims = demoWorker.claims.map((claim) =>
+    ({
+      id: claim.id,
+      worker_id: demoWorker.id,
+      disruption_id: null,
+      claim_type: "manual",
+      status: claim.status,
+      claim_time: `${claim.date}T${claim.startTime}:00.000Z`,
+      start_time: `${claim.date}T${claim.startTime}:00.000Z`,
+      end_time: claim.endTime ? `${claim.date}T${claim.endTime}:00.000Z` : null,
+      orders_before: null,
+      orders_during: null,
+      claim_hour: null,
+      fraud_score: claim.verification.mlAnomalyScore,
+      reason: claim.description,
+      rejection_reason: claim.rejectionReason || null,
+      amount: claim.amount,
+      payment_status: claim.status === "paid" ? "success" : "pending",
+      paid_at: claim.status === "paid" ? `${claim.date}T${claim.endTime || claim.startTime}:00.000Z` : null,
+      created_at: `${claim.date}T${claim.startTime}:00.000Z`,
+      trigger_type: claim.triggerType,
+      claim_date: claim.date,
+      duration_minutes: claim.durationMinutes,
+      description: claim.description,
+      location_lat: claim.location.lat,
+      location_lng: claim.location.lng,
+      zone_id: claim.zoneId,
+    } as unknown) as Claim
+  );
+
+  const payouts = demoWorker.payouts.map((payout) =>
+    ({
+      id: payout.id,
+      worker_id: demoWorker.id,
+      claim_id: payout.claimId || null,
+      amount: payout.amount,
+      payout_type: payout.type,
+      status: payout.status,
+      description: payout.description,
+      upi_id: demoWorker.upiId,
+      razorpay_transfer_id: null,
+      razorpay_payout_id: null,
+      created_at: `${payout.date}T00:00:00.000Z`,
+      processed_at: payout.status === "completed" ? `${payout.date}T00:30:00.000Z` : null,
+      completed_at: payout.status === "completed" ? `${payout.date}T01:00:00.000Z` : null,
+      failure_reason: null,
+      retry_count: 0,
+    } as unknown) as Payout
+  );
+
+  const weeklyStats = {
+    id: `demo-weekly-stats-${demoWorker.id}`,
+    worker_id: demoWorker.id,
+    week_start_date: demoWorker.insurance.weekStartDate,
+    total_deliveries: demoWorker.weeklyDeliveries,
+    total_earnings: demoWorker.weeklyEarnings,
+    active_hours: demoWorker.weeklyActiveHours,
+    avg_rating: demoWorker.avgRating,
+    total_claims: demoWorker.claims.length,
+    total_claim_amount: demoWorker.claims.reduce((sum, claim) => sum + claim.amount, 0),
+    created_at: createdAt,
+    updated_at: createdAt,
+  } as WorkerWeeklyStats;
+
+  const normalizedClaims = claims as Claim[];
+
+  return {
+    worker,
+    subscription,
+    workerInsurance,
+    insurancePlan,
+    vehicle,
+    zone,
+    claims: normalizedClaims,
+    payouts,
+    weeklyStats,
+    walletBalance: Math.max(0, demoWorker.weeklyEarnings - demoWorker.insurance.weeklyClaimTotal),
+    activeDisruption: null,
+    todayEarnings: Math.round(demoWorker.weeklyEarnings / 7),
+    predictedEarnings: Math.max(demoWorker.weeklyEarnings, 500),
+    pendingClaim: normalizedClaims.find((claim) => claim.status === "pending" || claim.status === "approved") || null,
+  };
 }
 
 function normalizeClaimForDashboard(claim: any): Claim {
@@ -111,10 +301,20 @@ export async function GET(request: Request) {
     }
 
     if (workerError) {
+      const demoWorker = findDemoWorker(workerId, phone);
+      if (demoWorker && isSupabaseUnavailable(workerError)) {
+        return NextResponse.json(buildDemoDashboardResponse(demoWorker));
+      }
+
       return NextResponse.json({ error: workerError.message }, { status: 500 });
     }
 
     if (!worker) {
+      const demoWorker = findDemoWorker(workerId, phone);
+      if (demoWorker) {
+        return NextResponse.json(buildDemoDashboardResponse(demoWorker));
+      }
+
       return NextResponse.json({ error: "Worker not found" }, { status: 404 });
     }
 
