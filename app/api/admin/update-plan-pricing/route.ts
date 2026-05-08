@@ -55,8 +55,8 @@ export async function POST(request: Request) {
     ];
 
     for (const update of updates) {
-      const { error } = await admin
-        .from("insurance_plans")
+      const { error } = await (admin
+        .from("insurance_plans") as any)
         .update({ weekly_premium: update.weekly_premium })
         .eq("name", update.name);
 

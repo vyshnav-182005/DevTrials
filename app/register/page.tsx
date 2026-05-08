@@ -167,7 +167,7 @@ export default function RegisterPage() {
       localStorage.setItem("userRole", payload.user.role);
       if (payload.worker) {
         localStorage.setItem("workerId", payload.worker.id);
-        localStorage.setItem("userPlatform", payload.worker.platform);
+        localStorage.setItem("userPlatform", payload.worker.platform || "");
       }
 
       // Set cookie for middleware

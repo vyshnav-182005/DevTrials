@@ -217,7 +217,7 @@ export default function LoginPage() {
       // Store worker info if available (for delivery partners)
       if (payload.worker) {
         localStorage.setItem("workerId", payload.worker.id);
-        localStorage.setItem("userPlatform", payload.worker.platform);
+        localStorage.setItem("userPlatform", payload.worker.platform || "");
       }
       
       // Set a cookie for the middleware

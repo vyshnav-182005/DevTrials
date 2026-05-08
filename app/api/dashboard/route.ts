@@ -93,7 +93,21 @@ function findDemoWorker(workerId: string | null, phone: string | null): DemoWork
 function buildDemoDashboardResponse(demoWorker: DemoWorker): DashboardResponse {
   const planTier = demoWorker.insurance.planTier;
   const plan = PLAN_TIERS[planTier];
-  const zone = DELIVERY_ZONES.find((entry) => entry.id === demoWorker.assignedZone) || null;
+  const gpsZone = DELIVERY_ZONES.find((entry) => entry.id === demoWorker.assignedZone) || null;
+  const zone: DeliveryZone | null = gpsZone
+    ? {
+        id: gpsZone.id,
+        name: gpsZone.name,
+        city: gpsZone.city,
+        center_lat: gpsZone.center.lat,
+        center_lng: gpsZone.center.lng,
+        radius_km: gpsZone.radiusKm,
+        is_active: true,
+        risk_score: 0,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+    : null;
   const nowIso = new Date().toISOString();
   const createdAt = nowIso;
 
@@ -292,10 +306,11 @@ export async function GET(request: Request) {
       if (userRes.error) {
         return NextResponse.json({ error: userRes.error.message }, { status: 500 });
       }
-      if (!userRes.data) {
+      const userData = userRes.data as { id: string } | null;
+      if (!userData) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
       }
-      const workerRes = await admin.from("workers").select("*").eq("user_id", userRes.data.id).maybeSingle();
+      const workerRes = await admin.from("workers").select("*").eq("user_id", userData.id).maybeSingle();
       workerError = workerRes.error;
       worker = workerRes.data as Worker | null;
     }

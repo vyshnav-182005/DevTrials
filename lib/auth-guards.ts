@@ -43,7 +43,7 @@ export async function requireRole(request: Request, allowedRoles: UserRole[]) {
   const { data: user, error } = await supabase
     .from("users")
     .select("*")
-    .eq("id", userId)
+    .eq("id", userId!)
     .single();
 
   if (error || !user) {

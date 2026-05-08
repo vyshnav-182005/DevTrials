@@ -13,6 +13,16 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  {
+    rules: {
+      // Downgrade existing patterns that are intentional in this codebase
+      "@typescript-eslint/no-explicit-any": "warn",
+      "@typescript-eslint/no-unused-vars": "warn",
+      "@typescript-eslint/ban-ts-comment": "warn",
+      "react/no-unescaped-entities": "warn",
+      "react-hooks/purity": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

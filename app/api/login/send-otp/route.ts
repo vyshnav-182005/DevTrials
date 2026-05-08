@@ -66,11 +66,13 @@ export async function POST(request: Request) {
 
     // Check if user exists in the users table
     const phoneLookupValues = getPhoneLookupValues(phone);
-    const { data: userData, error: userError } = await admin
+    const userRes = await admin
       .from("users")
       .select("id, name, phone, role")
       .in("phone", phoneLookupValues)
       .maybeSingle();
+    const userData = userRes.data as { id: string; name: string | null; phone: string; role: UserRole } | null;
+    const userError = userRes.error;
 
     if (userError && isSupabaseUnavailable(userError)) {
       if (requestedRole !== "worker") {
@@ -157,17 +159,18 @@ export async function POST(request: Request) {
       }
 
       // Check worker profile exists and matches platform
-      const { data: workerData, error: workerError } = await admin
+      const workerRes = await admin
         .from("workers")
         .select("id, platform")
         .eq("user_id", userData.id)
         .maybeSingle();
 
-      if (workerError) {
-        console.error("Worker lookup error:", workerError);
-        return NextResponse.json({ error: workerError.message }, { status: 500 });
+      if (workerRes.error) {
+        console.error("Worker lookup error:", workerRes.error);
+        return NextResponse.json({ error: workerRes.error.message }, { status: 500 });
       }
 
+      const workerData = workerRes.data as { id: string; platform: Platform | null } | null;
       if (!workerData) {
         return NextResponse.json(
           { error: "Worker profile not found. Please complete your registration." },
